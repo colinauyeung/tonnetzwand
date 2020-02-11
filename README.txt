@@ -1,6 +1,6 @@
 Tonnetz Ball & Wand
 
-Ball controls
+Ball Controls
 
 simple chords around c
 
@@ -10,6 +10,8 @@ simple chords around c
    	   / \
   	  A   E
 
+	To Change States:
+		- 
 	States:
 		1: C, G, E
 		2: C, E, A
@@ -17,3 +19,7 @@ simple chords around c
 		4: C, F, G#
 		5: C, G#, A#
 		6: C, A# G 	
+
+	
+Wand Controls
+

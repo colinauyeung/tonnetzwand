@@ -114,14 +114,17 @@ void loop() {
         rollVal = nunchuk_roll();
         
         triggerAction();
+        //Serial.println(action);
         delay(500);
-    
         playChord();
     }
     
     else
     {
       Serial.println("error");
+      //delay(500);
+      //action = 6;
+        //playChord();
     } 
 }
 
@@ -248,200 +251,179 @@ void triggerAction()
  */
 void setAction()
 {
-  // If right direction
-  if(action == 22)
+  // If down direction
+  if(pitchAction == 2)
   {
     //if right twist
-    switch(lastMainState)
+    if(rollAction == 2)
     {
-      case (1):
-        action = 7;
-        break;
-      case (2):
-        action = 14;
-        break;
-      case (3):
-        action = 21;
-        break;
-      case (4):
-        action = 28;
-        break;
-      case (5):
-        action = 35;
-        break;
-      case (6):
-        action = 42;
-        break;
-      default:
-        break;
-    }    
-  }
-  // right main direction
-  else if(action == 20)
-  {
-    //if center twist
-    switch(lastMainState)
+       switch(lastMainState)
+      {
+        case (1):
+          action = 7;
+          break;
+        case (2):
+          action = 14;
+          break;
+        case (3):
+          action = 21;
+          break;
+        case (4):
+          action = 28;
+          break;
+        case (5):
+          action = 35;
+          break;
+        case (6):
+          action = 42;
+          break;
+        default:
+          break;
+      }
+    }
+    // left twist
+    else if(rollAction == 1)
     {
-      case (1):
-        action = 6;
-        break;
-      case (2):
-        action = 13;
-        break;
-      case (3):
-        action = 20;
-        break;
-      case (4):
-        action = 27;
-        break;
-      case (5):
-        action = 34;
-        break;
-      case (6):
-        action = 41;
-        break;
-      default:
-        break;
-    }    
-  }
-  // right direction
-  else if(action == 21)
-  {
-    //if left twist
-    switch(lastMainState)
+      switch (lastMainState)
+      {
+        case (1):
+          action = 5;
+          break;
+        case (2):
+          action = 12;
+          break;
+        case (3):
+          action = 19;
+          break;
+        case (4):
+          action = 26;
+          break;
+        case (5):
+          action = 33;
+          break;
+        case (6):
+          action = 40;
+          break;
+        default:
+          break;
+      }
+    }
+    // no twist
+    else if (rollAction == 0)
     {
-      case (1):
-        action = 5;
-        break;
-      case (2):
-        action = 12;
-        break;
-      case (3):
-        action = 19;
-        break;
-      case (4):
-        action = 26;
-        break;
-      case (5):
-        action = 33;
-        break;
-      case (6):
-        action = 40;
-        break;
-      default:
-        break;
-    }    
+      switch (lastMainState)
+      {
+        case (1):
+          action = 6;
+          break;
+        case (2):
+          action = 13;
+          break;
+        case (3):
+          action = 20;
+          break;
+        case (4):
+          action = 27;
+          break;
+        case (5):
+          action = 34;
+          break;
+        case (6):
+          action = 42;
+          break;
+        default:
+          break;
+      } 
+    }  
   }
-  // if left main direction
-  else if(action == 12)
+  // Mid direction
+  else if(pitchAction == 1)
   {
     //if right twist
-    switch(lastMainState)
+    if(rollAction == 2)
     {
-      case (1):
-        action = 4;
-        break;
-      case (2):
-        action = 11;
-        break;
-      case (3):
-        action = 18;
-        break;
-      case (4):
-        action = 25;
-        break;
-      case (5):
-        action = 32;
-        break;
-      case (6):
-        action = 39;
-        break;
-      default:
-        break;
-    }    
-  }
-  // if left main direction
-  else if(action == 12)
-  {
-    //if middle twist
-    switch(lastMainState)
+      switch(lastMainState)
+      {
+        case (1):
+          action = 4;
+          break;
+        case (2):
+          action = 11;
+          break;
+        case (3):
+          action = 18;
+          break;
+        case (4):
+          action = 25;
+          break;
+        case (5):
+          action = 32;
+          break;
+        case (6):
+          action = 39;
+          break;
+        default:
+          break;
+      }
+    }
+    //if no twist
+    else if(rollAction == 0)
     {
-      case (1):
-        action = 3;
-        break;
-      case (2):
-        action = 10;
-        break;
-      case (3):
-        action = 17;
-        break;
-      case (4):
-        action = 24;
-        break;
-      case (5):
-        action = 31;
-        break;
-      case (6):
-        action = 38;
-        break;
-      default:
-        break;
-    }    
-  }
-  // if left main direction
-  else if(action == 12)
-  {
+      switch(lastMainState)
+      {
+        case (1):
+          action = 3;
+          break;
+        case (2):
+          action = 10;
+          break;
+        case (3):
+          action = 17;
+          break;
+        case (4):
+          action = 24;
+          break;
+        case (5):
+          action = 31;
+          break;
+        case (6):
+          action = 38;
+          break;
+        default:
+          break;
+      }
+    } 
     //if left twist
-    switch(lastMainState)
+    if(rollAction == 1)
     {
-      case (1):
-        action = 2;
-        break;
-      case (2):
-        action = 9;
-        break;
-      case (3):
-        action = 16;
-        break;
-      case (4):
-        action = 23;
-        break;
-      case (5):
-        action = 30;
-        break;
-      case (6):
-        action = 37;
-        break;
-      default:
-        break;
-    }    
+      switch(lastMainState)
+      {
+        case (1):
+          action = 2;
+          break;
+        case (2):
+          action = 9;
+          break;
+        case (3):
+          action = 17;
+          break;
+        case (4):
+          action = 24;
+          break;
+        case (5):
+          action = 31;
+          break;
+        case (6):
+          action = 38;
+          break;
+        default:
+          break;
+      }
+    }  
   }
-  // If flat
-  else if(action < 10)
+  else if (pitchAction == 0)
   {
-    switch(lastMainState)
-    {
-      case (1):
-        action = 1;
-        break;
-      case (2):
-        action = 8;
-        break;
-      case (3):
-        action = 15;
-        break;
-      case (4):
-        action = 22;
-        break;
-      case (5):
-        action = 29;
-        break;
-      case (6):
-        action = 36;
-        break;
-      default:
-        break;
-    }    
+    action = lastMainState;
   }
 }
 
@@ -666,6 +648,9 @@ void playChord()
       break;
   }
 
+
+  //Serial.print(noteOne);
+  //Serial.print(noteTwo);
 
   // This should be moved to new method to allow for different rythm (future implementation)
   MIDImessage(noteON, 60+noteOne-36, velocity);
