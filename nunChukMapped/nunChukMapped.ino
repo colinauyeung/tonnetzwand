@@ -1,30 +1,44 @@
+/*
+ * CPSC 599 - Physical and Tangible HCI
+ * Sarah Walker and Colin Au Yeung
+ * 
+ * tonnetz wand
+ * 
+ * This unit is used to control musical extension beyond a basic chord
+ * 
+ * See README.txt for states and mapping with tonnetz
+ */
+
+
 #include <SoftwareSerial.h>
 #include <Nunchuk.h>
 #include <Wire.h>
 #include "nunchuk.h"
 
+// Read values from sensor
 double pitchVal;
 double rollVal;
 
-
+// Actions determined by value thresholds
 int pitchAction = 0;
 int rollAction = 0;
-int action = 0;
-int pastAction = 0;
+int action = 1;
+int pastAction = 1;
 
+// ID of the message - incremenets if there has been a change
 int id = 0;
 
 
-// Music Stuff
+// MIDI message requirements
 int velocity = 100;//velocity of MIDI notes, must be between 0 and 127
 int noteON = 144; //144 = 10010000 in binary, note on command
 
-int lastMainState = 0; // only states that are basic major/minor chords
+int lastMainState = 1; // only states that are basic major/minor chords
 
 // Different chords
 
 // Position 1 Inversions (C major is PONE)
-// ID = 1 - 7
+// acion id = 1 - 7
 int PONE[3] = {0,7,3};      //id = 1
 int PONE_LL[3] = {0,7,11};  // id = 2
 int PONE_LM[3] = {0,7,14};  // id = 3
@@ -34,7 +48,7 @@ int PONE_RM[3] = {0,3,6};   // id = 6
 int PONE_RR[3] = {0,3,-1};  // id = 7
 
 // Position Two Inversions
-// id -> 8-14
+// action id -> 8-14
 int PTWO[3] = {0,3,-4};     // id = 8
 int PTWO_LL[3] = {0,3,10};  // id = 9
 int PTWO_LM[3] = {0,3,6};   //id = 10
@@ -44,7 +58,7 @@ int PTWO_RM[3] = {0,-4,-8}; // id = 13
 int PTWO_RR[3] = {0,-4,-11};// id = 14
 
 // Position Three Inversions
-// id -> 15-21
+// action id -> 15-21
 int PTHREE[3] = {0,-4,-7};    // id = 15
 int PTHREE_LL[3] = {0,-4,-1}; // id = 16
 int PTHREE_LM[3] = {0,-4,-8}; // id = 17
@@ -54,7 +68,7 @@ int PTHREE_RM[3] = {0,-7,-14};// id = 20
 int PTHREE_RR[3] = {0,-7,-10};// id = 21
 
 // Position Four Inversions
-// id -> 23-28
+// action id -> 23-28
 int PFOUR[3] = {0,-7,-3};     // id = 22
 int PFOUR_LL[3] = {0,-7,-11}; // id = 23
 int PFOUR_LM[3] = {0,-7,-14}; // id = 24
@@ -64,7 +78,7 @@ int PFOUR_RM[3] = {0,-3,-6};  // id = 27
 int PFOUR_RR[3] = {0,-3,1};   // id = 28
 
 // Position Five Inversions
-// id -> 20-35
+// action id -> 20-35
 int PFIVE[3] = {0,-3,4};      // id = 29
 int PFIVE_LL[3] = {0,-3,-10}; // id = 30
 int PFIVE_LM[3] = {0,-3,-6};  // id = 31
@@ -74,7 +88,7 @@ int PFIVE_RM[3] = {0,4,8};    // id = 34
 int PFIVE_RR[3] = {0,4,11};   // id = 35
 
 // Position Six Inversions
-// id -> 36-43
+// action id -> 36-43
 int PSIX[3] = {0,4,7};      // id = 36
 int PSIX_LL[3] = {0,4,1};   // id = 37
 int PSIX_LM[3] = {0,4,8};   // id = 38
@@ -86,14 +100,12 @@ int PSIX_RR[3] = {0,7,10};  // id = 42
 
 
 
-
-
 void setup() {
     Serial.begin(9600);
     Wire.begin();
-    // nunchuk_init_power(); // A1 and A2 is power supply
     nunchuk_init();
 }
+
 void loop() {
   
     if (nunchuk_read()) {
@@ -101,17 +113,16 @@ void loop() {
         pitchVal = nunchuk_pitch();
         rollVal = nunchuk_roll();
         
-    triggerAction();
-    delay(500);
-
-    playChord();
+        triggerAction();
+        delay(500);
+    
+        playChord();
     }
     
     else
     {
       Serial.println("error");
-    }
-    
+    } 
 }
 
 
@@ -127,7 +138,6 @@ void determinePitchAction()
     if(pitchAction != 0 && (rollVal > - 0.7) && (rollVal < 0.5))
     {
       pitchAction = 0;
-      id++;
     }
     
   }
@@ -137,7 +147,6 @@ void determinePitchAction()
     if(pitchAction != 1)
     {
       pitchAction = 1;
-      id++;
     }
   }
 
@@ -147,7 +156,6 @@ void determinePitchAction()
     if(pitchAction != 2)
     {
       pitchAction = 2;
-      id++;
     }
   }
 }
@@ -209,9 +217,24 @@ void triggerAction()
   determinePitchAction();
   determineRollAction();
 
-
   setAction();
-  
+
+  //  Identify if there has been a change in pitch & roll that
+  //  should trigger a new chord. If so, update ID, pastAction,
+  //  and lastMainState
+  if(action != pastAction)
+  {
+    id ++;
+    pastAction = action;
+    if(action == 1 || action == 8 || action == 15 || action == 22 || action == 29 || action == 36)
+    {
+      lastMainState = action;
+    }
+  }
+
+  // To allow for easier entity identification
+  // this entity only has id's below ten. This is
+  // in place for implementation with radio communication
   if(id > 9)
   {
     id = 1;
@@ -219,6 +242,10 @@ void triggerAction()
 }
 
 
+/*
+ * Determines which note to play based on last Main state
+ * Note: main state is determined by another entity (the ball)
+ */
 void setAction()
 {
   // If right direction
@@ -249,6 +276,7 @@ void setAction()
         break;
     }    
   }
+  // right main direction
   else if(action == 20)
   {
     //if center twist
@@ -276,6 +304,7 @@ void setAction()
         break;
     }    
   }
+  // right direction
   else if(action == 21)
   {
     //if left twist
@@ -638,8 +667,7 @@ void playChord()
   }
 
 
-
-  
+  // This should be moved to new method to allow for different rythm
   MIDImessage(noteON, 60+noteOne-36, velocity);
   MIDImessage(noteON, 60+noteOne, velocity);
   MIDImessage(noteON, 60+noteTwo, velocity);

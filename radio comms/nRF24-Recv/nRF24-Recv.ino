@@ -17,9 +17,6 @@
 
 // Music Stuff
 int major[] = {0,4,7,0};
-int dominantSeventh[] = {0,4,7,10};
-int majorSixth[] = {0,-3,4,7};
-int majorSeventh[] = {0,4,7,11};
 int velocity = 100;//velocity of MIDI notes, must be between 0 and 127
 //(higher velocity usually makes MIDI instruments louder)
 int noteON = 144;//144 = 10010000 in binary, note on command
@@ -44,11 +41,9 @@ void loop() {
   if (radio.available()) {
     char text[32] = "";
     radio.read(&text, sizeof(text));
-    //Serial.println(text);
 
     val = atof(text);
 
-    Serial.println(val);
     if(val == -1)
     {
       root--;
@@ -58,7 +53,7 @@ void loop() {
     one = root+major[1];
     two = root+major[2];
     three = root+major[3];
-    //playChord(root, one, two, three);
+    playChord(root, one, two, three);
 }
 
 void playChord(int root, int one, int two, int three)
