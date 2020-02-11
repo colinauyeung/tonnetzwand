@@ -23,7 +23,7 @@ double rollVal;
 int pitchAction = 0;
 int rollAction = 0;
 int action = 1;
-int pastAction = 1;
+int pastAction = 0;
 
 // ID of the message - incremenets if there has been a change
 int id = 0;
@@ -33,7 +33,7 @@ int id = 0;
 int velocity = 100;//velocity of MIDI notes, must be between 0 and 127
 int noteON = 144; //144 = 10010000 in binary, note on command
 
-int lastMainState = 1; // only states that are basic major/minor chords
+int lastMainState = 8; // only states that are basic major/minor chords
 
 // Different chords
 
@@ -216,7 +216,6 @@ void determineRollAction()
 // Trigger action based on change in roll and pitch
 void triggerAction()
 {  
-  bool changedAction = false;
   determinePitchAction();
   determineRollAction();
 
@@ -262,19 +261,19 @@ void setAction()
         case (1):
           action = 7;
           break;
-        case (2):
+        case (8):
           action = 14;
           break;
-        case (3):
+        case (15):
           action = 21;
           break;
-        case (4):
+        case (22):
           action = 28;
           break;
-        case (5):
+        case (29):
           action = 35;
           break;
-        case (6):
+        case (36):
           action = 42;
           break;
         default:
@@ -289,19 +288,19 @@ void setAction()
         case (1):
           action = 5;
           break;
-        case (2):
+        case (8):
           action = 12;
           break;
-        case (3):
+        case (15):
           action = 19;
           break;
-        case (4):
+        case (22):
           action = 26;
           break;
-        case (5):
+        case (29):
           action = 33;
           break;
-        case (6):
+        case (36):
           action = 40;
           break;
         default:
@@ -316,19 +315,19 @@ void setAction()
         case (1):
           action = 6;
           break;
-        case (2):
+        case (8):
           action = 13;
           break;
-        case (3):
+        case (15):
           action = 20;
           break;
-        case (4):
+        case (22):
           action = 27;
           break;
-        case (5):
+        case (29):
           action = 34;
           break;
-        case (6):
+        case (36):
           action = 42;
           break;
         default:
@@ -347,19 +346,19 @@ void setAction()
         case (1):
           action = 4;
           break;
-        case (2):
+        case (8):
           action = 11;
           break;
-        case (3):
+        case (15):
           action = 18;
           break;
-        case (4):
+        case (22):
           action = 25;
           break;
-        case (5):
+        case (29):
           action = 32;
           break;
-        case (6):
+        case (36):
           action = 39;
           break;
         default:
@@ -374,19 +373,19 @@ void setAction()
         case (1):
           action = 3;
           break;
-        case (2):
+        case (8):
           action = 10;
           break;
-        case (3):
+        case (15):
           action = 17;
           break;
-        case (4):
+        case (22):
           action = 24;
           break;
-        case (5):
+        case (29):
           action = 31;
           break;
-        case (6):
+        case (36):
           action = 38;
           break;
         default:
@@ -401,19 +400,19 @@ void setAction()
         case (1):
           action = 2;
           break;
-        case (2):
+        case (8):
           action = 9;
           break;
-        case (3):
+        case (15):
           action = 17;
           break;
-        case (4):
+        case (22):
           action = 24;
           break;
-        case (5):
+        case (29):
           action = 31;
           break;
-        case (6):
+        case (36):
           action = 38;
           break;
         default:
