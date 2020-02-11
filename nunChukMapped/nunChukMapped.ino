@@ -234,7 +234,7 @@ void triggerAction()
 
   // To allow for easier entity identification
   // this entity only has id's below ten. This is
-  // in place for implementation with radio communication
+  // in place for future implementation with radio communication
   if(id > 9)
   {
     id = 1;
@@ -667,7 +667,7 @@ void playChord()
   }
 
 
-  // This should be moved to new method to allow for different rythm
+  // This should be moved to new method to allow for different rythm (future implementation)
   MIDImessage(noteON, 60+noteOne-36, velocity);
   MIDImessage(noteON, 60+noteOne, velocity);
   MIDImessage(noteON, 60+noteTwo, velocity);

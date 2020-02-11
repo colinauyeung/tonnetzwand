@@ -1,3 +1,21 @@
+/*
+ * CPSC 599 - Physical and Tangible HCI
+ * Sarah Walker and Colin Au Yeung
+ * 
+ * tonnetz ball
+ * 
+ * This unit is used to control basic chords
+ * 
+ * See README.txt for states and mapping with tonnetz
+ */
+
+
+
+
+
+
+
+
 // I2C device class (I2Cdev) demonstration Arduino sketch for MPU6050 class using DMP (MotionApps v2.0)
 // 6/21/2012 by Jeff Rowberg <jeff@rowberg.net>
 // Updates should (hopefully) always be available at https://github.com/jrowberg/i2cdevlib
