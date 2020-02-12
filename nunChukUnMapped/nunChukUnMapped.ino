@@ -22,7 +22,16 @@ RF24 radio(7,8);  // CE,CSN
 
 // Radio message components
 const byte address[6] = "00001";
-char message[3];
+
+// Structure of message sent to reciever
+typedef struct{
+  int ID;
+  int pitchA;
+  int rollA;
+ } actionMessage;
+
+// Message sent to reciever
+ actionMessage message;
 
 
 // Read values from sensor
@@ -40,7 +49,8 @@ void setup() {
     Serial.begin(9600);
     Wire.begin();
     nunchuk_init();
-    
+
+      
     radio.begin();
     radio.openWritingPipe(address);
     radio.setPALevel(RF24_PA_MIN);
@@ -48,26 +58,20 @@ void setup() {
 }
 
 void loop() {
- /* 
   if (nunchuk_read()) {
       // Work with nunchuk_data
       pitchVal = nunchuk_pitch();
       rollVal = nunchuk_roll();
       
       determineAction();
-      delay(100);
-      playChord();
-  }
-  
-  else
-  {
-  }*/
 
-  pitchAction = 1;
-  rollAction = 2;
-  
-  itoa(action, message, 10);
-  radio.write(&message, sizeof(message));
+      // Set 
+      message.ID = 1; 
+      message.pitchA = pitchAction;
+      message.rollA = rollAction;
+
+      radio.write(&message,sizeof(message));
+  }
 }
 
 
@@ -160,13 +164,4 @@ void determineAction()
 {  
   determinePitchAction();
   determineRollAction();  
-}
-
-
-void setID()
-{
-  // Wand identifier
-  action = 100;
-  action += 10 * pitchAction;
-  action += rollAction;
 }
