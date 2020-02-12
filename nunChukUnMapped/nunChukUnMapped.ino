@@ -24,10 +24,15 @@ RF24 radio(7,8);  // CE,CSN
 const byte address[6] = "00001";
 
 // Structure of message sent to reciever
+/*
+ * ID == 1 : Wand
+ *  stateOne is pitch action
+ *  stateTwo is roll action
+*/
 typedef struct{
-  int ID;
-  int pitchA;
-  int rollA;
+  int ID = 1;
+  int stateOne = 0;
+  int stateTwo = 0;
  } actionMessage;
 
 // Message sent to reciever
@@ -63,17 +68,26 @@ void loop() {
       pitchVal = nunchuk_pitch();
       rollVal = nunchuk_roll();
       
-      determineAction();
+      setAction();
 
-      // Set 
-      message.ID = 1; 
-      message.pitchA = pitchAction;
-      message.rollA = rollAction;
+      // Set message
+      message.stateOne = pitchAction;
+      message.stateTwo = rollAction;
 
+      //Serial.println(message.ID);
+      //Serial.println(message.stateOne);
+      //Serial.println(message.stateTwo);
       radio.write(&message,sizeof(message));
+      delay(300);
   }
 }
 
+// Set actions for roll and pitch
+void setAction()
+{  
+  determinePitchAction();
+  determineRollAction();  
+}
 
 void determinePitchAction()
 {
@@ -157,11 +171,4 @@ void determineRollAction()
       }
   }
 
-}
-
-// Trigger action based on change in roll and pitch
-void determineAction()
-{  
-  determinePitchAction();
-  determineRollAction();  
 }

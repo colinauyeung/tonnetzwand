@@ -17,10 +17,28 @@
  RF24 radio(7,8);  // CE,CSN
  const byte address[6] = "00001";
 
+/*
+ * ID == 1 : Wand
+ *  stateOne is pitch action
+ *  stateTwo is roll action
+ *  
+ * ID == 2 : Ball
+ *  stateOne is
+ *  stateTwo is
+ */
+ typedef struct{
+  int ID;
+  int stateOne;
+  int stateTwo;
+ } actionMessage;
+
+ actionMessage message;
+
 
 int lastMainState = 0; // only states that are basic major/minor chords
 int action = 1;
 int pastAction = 0;
+bool change = false;
 
 int noteOne;
 int noteTwo;
@@ -96,7 +114,7 @@ int PSIX_RL[3] = {0,7,11};  // id = 40
 int PSIX_RM[3] = {0,7,14};  // id = 41
 int PSIX_RR[3] = {0,7,10};  // id = 42
 
-// Actions determined by value thresholds
+// Actions determined by wand
 int pitchAction = 0;
 int rollAction = 0;
 
@@ -111,34 +129,54 @@ int rollAction = 0;
  }
 void loop() {
   if (radio.available()) {
-    char text[32] = "";
-    radio.read(&text, sizeof(text));
-    
-    Serial.println(text);
+    radio.read(&message, sizeof(message));
+
+    //Serial.print(message.ID); Serial.print(" ");
+    //Serial.print(message.stateOne); Serial.print(" ");
+    //Serial.print(message.stateTwo); Serial.print(" ");
+    //Serial.println();
+
+    if(message.ID == 1)
+    {
+      pitchAction = message.stateOne;
+      rollAction = message.stateTwo;
+    }
+    else if(message.ID == 2)
+    {
+      // Ball actions go ehre!
+    }
+
   }
 
-  action = 1;
   setChordAction();
-  setChord();
-  turnChordOn();
+  if(change)
+  {
+    turnChordOff();
+    setChord();
+    turnChordOn();
+  }
+  
+  
 }
 
 
-void decipherMessage()
-{
-  val = atof(text);
-}
 
 void setChordAction()
 {
 
   if(action != pastAction)
   {
+    change = true;
+    
     pastAction = action;
     if(action == 1 || action == 8 || action == 15 || action == 22 || action == 29 || action == 36)
     {
       lastMainState = action;
     }
+  }
+  else
+  {
+    change = false;
   }
 
   // If down direction
