@@ -15,7 +15,8 @@
  #include <nRF24L01.h>
  #include <RF24.h>
  RF24 radio(7,8);  // CE,CSN
- const byte address[6] = "00001";
+ const byte addressWand[6] = "00001";
+ const byte addressBall[6] = "00010";
 
 /*
  * ID == 1 : Wand
@@ -32,7 +33,8 @@
   int stateTwo;
  } actionMessage;
 
- actionMessage message;
+ actionMessage messageWand;
+ actionMessage messageBall;
 
 
 int lastMainState = 0; // only states that are basic major/minor chords
@@ -118,42 +120,50 @@ int PSIX_RR[3] = {0,7,10};  // id = 42
 int pitchAction = 0;
 int rollAction = 0;
 
+// Actions determined by ball
+
 
  void setup() {
   Serial.begin(9600);
   radio.begin();
-  radio.openReadingPipe(0, address);
+  radio.openReadingPipe(0, addressWand);
   radio.setPALevel(RF24_PA_MIN);
   radio.startListening();
+  //radio.stopListening();
   
  }
 void loop() {
   if (radio.available()) {
-    radio.read(&message, sizeof(message));
+    
 
-    //Serial.print(message.ID); Serial.print(" ");
-    //Serial.print(message.stateOne); Serial.print(" ");
-    //Serial.print(message.stateTwo); Serial.print(" ");
-    //Serial.println();
 
-    if(message.ID == 1)
+    
+    radio.read(&messageWand, sizeof(messageWand));
+
+    Serial.print(messageWand.ID); Serial.print(" ");
+    Serial.print(messageWand.stateOne); Serial.print(" ");
+    Serial.print(messageWand.stateTwo); Serial.print(" ");
+    Serial.println();
+
+    // Set wand actions
+    if(messageWand.ID == 1)
     {
-      pitchAction = message.stateOne;
-      rollAction = message.stateTwo;
+      pitchAction = messageWand.stateOne;
+      rollAction = messageWand.stateTwo;
     }
-    else if(message.ID == 2)
-    {
+    //else if(message.ID == 2)
+    //{
       // Ball actions go ehre!
-    }
+    //}
 
   }
 
   setChordAction();
   if(change)
   {
-    turnChordOff();
-    setChord();
-    turnChordOn();
+    //turnChordOff();
+    //setChord();
+    //turnChordOn();
   }
   
   

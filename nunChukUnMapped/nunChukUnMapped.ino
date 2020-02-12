@@ -9,7 +9,7 @@
  * See README.txt for states and mapping with tonnetz
  */
 
-// Radio stuff
+// Radio
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
@@ -74,11 +74,11 @@ void loop() {
       message.stateOne = pitchAction;
       message.stateTwo = rollAction;
 
-      //Serial.println(message.ID);
-      //Serial.println(message.stateOne);
-      //Serial.println(message.stateTwo);
+      Serial.println(message.ID);
+      Serial.println(message.stateOne);
+      Serial.println(message.stateTwo);
+      Serial.println("Writing");
       radio.write(&message,sizeof(message));
-      delay(300);
   }
 }
 

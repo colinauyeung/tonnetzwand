@@ -3,21 +3,6 @@
 // I2C device class (I2Cdev) demonstration Arduino sketch for MPU6050 class using DMP (MotionApps v2.0)
 // 6/21/2012 by Jeff Rowberg <jeff@rowberg.net>
 // Updates should (hopefully) always be available at https://github.com/jrowberg/i2cdevlib
-//
-// Changelog:
-//      2013-05-08 - added seamless Fastwire support
-//                 - added note about gyro calibration
-//      2012-06-21 - added note about Arduino 1.0.1 + Leonardo compatibility error
-//      2012-06-20 - improved FIFO overflow handling and simplified read process
-//      2012-06-19 - completely rearranged DMP initialization code and simplification
-//      2012-06-13 - pull gyro and accel data from FIFO packet instead of reading directly
-//      2012-06-09 - fix broken FIFO read sequence and change interrupt detection to RISING
-//      2012-06-05 - add gravity-compensated initial reference frame acceleration output
-//                 - add 3D math helper file to DMP6 example sketch
-//                 - add Euler output and Yaw/Pitch/Roll output formats
-//      2012-06-04 - remove accel offset clearing for better results (thanks Sungon Lee)
-//      2012-06-01 - fixed gyro sensitivity to be 2000 deg/sec instead of 250
-//      2012-05-30 - basic DMP initialization working
 
 /* ============================================
 I2Cdev device library code is placed under the MIT license
@@ -43,7 +28,6 @@ THE SOFTWARE.
 ===============================================
 */
 
-//#include <MIDI.h>
 #include "I2Cdev.h"
 
 #include "MPU6050_6Axis_MotionApps20.h"
@@ -116,7 +100,7 @@ float lastw = 0;
 RF24 radio(7,8);  // CE,CSN
 
 // Radio message components
-const byte address[6] = "00001";
+const byte address[6] = "00010";
 
 // Structure of message sent to reciever
 /*
@@ -140,7 +124,6 @@ int gesture = 0;
 bool b1Engaged = false;
 bool b2Engaged = false;
 
-//MIDI_CREATE_DEFAULT_INSTANCE();
 CRGB leds[NUM_LEDS];
 
 // ================================================================
@@ -170,18 +153,18 @@ void setRadioMessage()
   else
   {
     message.stateOne = gesture;
-    if(b1Engaged && b2Engaged)
-    {
-      message.stateTwo = 3;
-    }
-    else if(b1Engaged)
+    //if(b1Engaged && b2Engaged)
+    //{
+      //message.stateTwo = 3;
+    //}
+    if(b1Engaged)
     {
       message.stateTwo = 1;
     }
-    else if(b2Engaged)
-    {
-      message.stateTwo = 2;
-    }
+    //else if(b2Engaged)
+    //{
+      //message.stateTwo = 2;
+    //}
     else
     {
       message.stateTwo = 0;
@@ -191,7 +174,10 @@ void setRadioMessage()
 
 void sendRadioMessage()
 {
-  radio.write(&message,sizeof(message));
+  if(radio.available())
+  {
+    radio.write(&message,sizeof(message));
+  }
 }
 
 
@@ -277,8 +263,8 @@ void setup() {
     mpu.initialize();
 
     // verify connection
-    Serial.println(F("Testing device connections..."));
-    Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
+    //Serial.println(F("Testing device connections..."));
+    //Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
 
     // wait for ready
 
@@ -311,9 +297,9 @@ void setup() {
         // 1 = initial memory load failed
         // 2 = DMP configuration updates failed
         // (if it's going to break, usually the code will be 1)
-        Serial.print(F("DMP Initialization failed (code "));
-        Serial.print(devStatus);
-        Serial.println(F(")"));
+        //Serial.print(F("DMP Initialization failed (code "));
+        //Serial.print(devStatus);
+        //Serial.println(F(")"));
     }
 
     // configure LED for output
@@ -326,8 +312,6 @@ void setup() {
     radio.openWritingPipe(address);
     radio.setPALevel(RF24_PA_MIN);
     radio.stopListening();
-
-
 }
 
 
@@ -355,7 +339,7 @@ void loop() {
     if ((mpuIntStatus & 0x10) || fifoCount == 1024) {
         // reset so we can continue cleanly
         mpu.resetFIFO();
-        Serial.println(F("FIFO overflow!"));
+        //Serial.println(F("FIFO overflow!"));
 
     // otherwise, check for DMP data ready interrupt (this should happen frequently)
     } else if (mpuIntStatus & 0x02) {
@@ -371,14 +355,14 @@ void loop() {
 
           // display quaternion values in easy matrix form: w x y z
           mpu.dmpGetQuaternion(&quat, fifoBuffer);
-          Serial.print("quat\t");
-          Serial.print(quat.w);
-          Serial.print("\t");
-          Serial.print(quat.x);
-          Serial.print("\t");
-          Serial.print(quat.y);
-          Serial.print("\t");
-          Serial.println(quat.z);
+          //Serial.print("quat\t");
+         // Serial.print(quat.w);
+          //Serial.print("\t");
+          //Serial.print(quat.x);
+          //Serial.print("\t");
+          //Serial.print(quat.y);
+          //Serial.print("\t");
+          //Serial.println(quat.z);
           if(count > 500 & not stable){
             stable = checkstable(quat.x);
             count = 0;
