@@ -1,9 +1,16 @@
+
+/*
+ * CPSC 599 - Physical and Tangible HCI
+ * Sarah Walker and Colin Au Yeung
+ * 
+ * tonnetz ball
+ * 
+ * This device maps gestures from a gyroscope and an external device (recieved over radio)
+ * to a musical chord. It then sends that chord as a MIDI message.
+ * 
+ */
+
 #include <I2Cdev.h>
-
-// I2C device class (I2Cdev) demonstration Arduino sketch for MPU6050 class using DMP (MotionApps v2.0)
-// 6/21/2012 by Jeff Rowberg <jeff@rowberg.net>
-// Updates should (hopefully) always be available at https://github.com/jrowberg/i2cdevlib
-
 /* ============================================
 I2Cdev device library code is placed under the MIT license
 Copyright (c) 2012 Jeff Rowberg
@@ -40,32 +47,8 @@ MPU6050 mpu;
 #include <FastLED.h>
 #define NUM_LEDS 4
 #define DATA_PIN 3
-
-/* =========================================================================
-   NOTE: In addition to connection 3.3v, GND, SDA, and SCL, this sketch
-   depends on the MPU-6050's INT pin being connected to the Arduino's
-   external interrupt #0 pin. On the Arduino Uno and Mega 2560, this is
-   digital I/O pin 2.
- * ========================================================================= */
-
-/* =========================================================================
-   NOTE: Arduino v1.0.1 with the Leonardo board generates a compile error
-   when using Serial.write(buf, len). The Teapot output uses this method.
-   The solution requires a modification to the Arduino USBAPI.h file, which
-   is fortunately simple, but annoying. This will be fixed in the next IDE
-   release. For more info, see these links:
-
-   http://arduino.cc/forum/index.php/topic,109987.0.html
-   http://code.google.com/p/arduino/issues/detail?id=958
- * ========================================================================= */
-
-
-
-
-
 #define LED_PIN 13 // (Arduino is 13, Teensy is 11, Teensy++ is 6)
 bool blinkState = false;
-
 
 // MPU control/status vars
 bool dmpReady = false;  // set true if DMP init was successful
@@ -74,7 +57,6 @@ uint8_t devStatus;      // return status after each device operation (0 = succes
 uint16_t packetSize;    // expected DMP packet size (default is 42 bytes)
 uint16_t fifoCount;     // count of all bytes currently in FIFO
 uint8_t fifoBuffer[64]; // FIFO storage buffer
-
 
 
 // orientation/motion vars
@@ -86,23 +68,20 @@ VectorFloat gravity;    // [x, y, z]            gravity vector
 float euler[3];         // [psi, theta, phi]    Euler angle container
 float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
 
-
-
 // packet structure for InvenSense teapot demo
 uint8_t teapotPacket[14] = { '$', 0x02, 0,0, 0,0, 0,0, 0,0, 0x00, 0x00, '\r', '\n' };
 int count = 0;
 bool stable = false;
 float lastw = 0;
 
-
-// Radio stuff
+// Radio requirements
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
 RF24 radio(7,8);  // CE,CSN
 const byte address[6] = "00001";
 
-// Structure of message sent to reciever
+// Structure of message sent from other device
 /*
  * ID == 1 : Wand
  *  stateOne is pitch action
@@ -114,7 +93,7 @@ typedef struct{
   int stateTwo = 0;
  } actionMessage;
 
-// Message sent to reciever
+// Message recieved from transmitter
  actionMessage message;
 
 int button1 = 4;
@@ -140,13 +119,11 @@ int minorright[3] = {3, 7, 10};
 
 int augflipped[3] = {0, 3, 9};
 
+// previous note tracking - used to turn off last sent chord
 int prevNote[4] = {0,0,0,0};
 
-int f = 5;
-int g = 7;
-
-
-int state[5] = {0, 0, 0, 0, 0};
+int f = 5; // offset for f note
+int g = 7; // offset for g note
 
 // MIDI message requirements
 int velocity = 100;//velocity of MIDI notes, must be between 0 and 127
@@ -193,11 +170,10 @@ bool readbutton(int button){
 }
 
 
-//checks if the w value has not changed too much
+// checks if the w value has not changed too much
 bool checkstable(float quatw){
   float set = lastw-quatw;
   if(set > -0.01 & set < 0.01){
-    
    return true;
   }
   else{
@@ -206,6 +182,9 @@ bool checkstable(float quatw){
   }
 }
 
+/*
+ * Maps up, down, left, and right gestures to a state
+ */
 int checkgesture(float quatx, float quaty){
 
   //tilt down
@@ -243,22 +222,10 @@ void setup() {
     while (!Serial); // wait for Leonardo enumeration, others continue immediately
     FastLED.addLeds<WS2812, DATA_PIN, RGB>(leds, NUM_LEDS);
 
-    // NOTE: 8MHz or slower host processors, like the Teensy @ 3.3v or Ardunio
-    // Pro Mini running at 3.3v, cannot handle this baud rate reliably due to
-    // the baud timing being too misaligned with processor ticks. You must use
-    // 38400 or slower in these cases, or use some kind of external separate
-    // crystal solution for the UART timer.
-
     // initialize device
     mpu.initialize();
 
-    // verify connection
-    //Serial.println(F("Testing device connections..."));
-    //Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
-
     // wait for ready
-
-
     // load and configure the DMP
     
     devStatus = mpu.dmpInitialize();
@@ -284,13 +251,6 @@ void setup() {
         // get expected DMP packet size for later comparison
         packetSize = mpu.dmpGetFIFOPacketSize();
     } else {
-        // ERROR!
-        // 1 = initial memory load failed
-        // 2 = DMP configuration updates failed
-        // (if it's going to break, usually the code will be 1)
-        //Serial.print(F("DMP Initialization failed (code "));
-        //Serial.print(devStatus);
-        //Serial.println(F(")"));
     }
 
     // configure LED for output
@@ -334,8 +294,6 @@ void loop() {
     if ((mpuIntStatus & 0x10) || fifoCount == 1024) {
         // reset so we can continue cleanly
         mpu.resetFIFO();
-        //Serial.println(F("FIFO overflow!"));
-
     // otherwise, check for DMP data ready interrupt (this should happen frequently)
     } else if (mpuIntStatus & 0x02) {
         // wait for correct available data length, should be a VERY short wait
@@ -350,14 +308,6 @@ void loop() {
 
           // display quaternion values in easy matrix form: w x y z
           mpu.dmpGetQuaternion(&quat, fifoBuffer);
-//          Serial.print("quat\t");
-//          Serial.print(quat.w);
-//          Serial.print("\t");
-//          Serial.print(quat.x);
-//          Serial.print("\t");
-//          Serial.print(quat.y);
-//          Serial.print("\t");
-//          Serial.println(quat.z);
           if(count > 500 & not stable){
             stable = checkstable(quat.x);
             count = 0;
