@@ -140,6 +140,8 @@ int minorright[3] = {3, 7, 10};
 
 int augflipped[3] = {0, 3, 9};
 
+int prevNote[4] = {0,0,0,0};
+
 int f = 5;
 int g = 7;
 
@@ -510,6 +512,8 @@ void MIDImessage(int command, int MIDInote, int MIDIvelocity) {
 
 void playchord(int chord[], int offset, int base){
   for(int i = 0; i<4; i++){
+    MIDI.sendNoteOff(prevNote[i], velocity, 1);
     MIDI.sendNoteOn(base+offset+chord[i], velocity, 1);
+    prevNote[i] = base+offset+chord[i];
   }
 }
