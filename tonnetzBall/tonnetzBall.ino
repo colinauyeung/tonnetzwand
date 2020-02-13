@@ -47,8 +47,7 @@ MPU6050 mpu;
 #include <FastLED.h>
 #define NUM_LEDS 4
 #define DATA_PIN 3
-#define LED_PIN 13 // (Arduino is 13, Teensy is 11, Teensy++ is 6)
-bool blinkState = false;
+
 
 // MPU control/status vars
 bool dmpReady = false;  // set true if DMP init was successful
@@ -96,27 +95,36 @@ typedef struct{
 // Message recieved from transmitter
  actionMessage message;
 
+//Set button pins
 int button1 = 4;
 int button2 = 5;
 
+//storage values for gestures and buttons
 int gesture = 0;
 bool b1Engaged = 0;
 bool b2Engaged = 0;
 
+//Set up array for leds
 CRGB leds[NUM_LEDS];
 
+//Define the values for the chords
 int major[3] = {0, 4, 7};
 int minor[3] = {0, 3, 7};
 int aug[3] = {0, 4, 8};
+
+//Define the values for adding a 4th note to make a seventh chord
 int major7 = 11;
 int minor7 = 10;
 
+//Chords when major chord is reflected along a tonnetz grid line
 int majorleft[3] = {0, 4, 9};
 int majorright[3] = {4, 7, 11};
 
+//Chords when minor chord is reflected along a tonnetz grid line
 int minorleft[3] = {0, 3, 8}; 
 int minorright[3] = {3, 7, 10};
 
+//Chords when the augmented chord is flipped
 int augflipped[3] = {0, 3, 9};
 
 // previous note tracking - used to turn off last sent chord
@@ -141,12 +149,12 @@ void dmpDataReady() {
 }
 
 // ================================================================
-// ===                       Methods                            ===
+// ===                       Function                           ===
 // ================================================================
 
 
 
-
+//Function for writing a color to all leds
 void setcolors(CRGB color){
   for(int i = 0; i<NUM_LEDS; i++){
     leds[i] = color;
@@ -154,13 +162,17 @@ void setcolors(CRGB color){
   FastLED.show();
 }
 
+//Function for writing a color to the first led (front facing)
 void setcolor1(CRGB color){
   leds[0] = color;
   FastLED.show();
 }
 
+//Read a value from a button
 bool readbutton(int button){
   int buttonValue = digitalRead(button);
+
+  //Truth values flipped because button should be pulled high
   if (buttonValue == LOW){
     return true;
   }
@@ -172,31 +184,38 @@ bool readbutton(int button){
 
 // checks if the w value has not changed too much
 bool checkstable(float quatw){
+
+  //Get the difference
   float set = lastw-quatw;
+
+  //Check if it's within acceptable margins
   if(set > -0.01 & set < 0.01){
    return true;
   }
+
+  //otherwise update past values
   else{
     lastw = quatw;
     return false;
   }
 }
 
+
 /*
  * Maps up, down, left, and right gestures to a state
  */
 int checkgesture(float quatx, float quaty){
 
-  //tilt down
+  //tilt right
   if(quatx > 0.40) return 3;
 
-  //tilt up
+  //tilt left
   if(quatx < -0.40) return 4;
 
-  //tilt right
+  //tilt up
   if(quaty < -0.40) return 2;
 
-  //tilt left
+  //tilt down
   if(quaty > 0.40) return 1;
 
   //Neutral position
@@ -210,6 +229,10 @@ int checkgesture(float quatx, float quaty){
 // ================================================================
 
 void setup() {
+
+    /*
+     * I2C set up Code from https://howtomechatronics.com/tutorials/arduino/arduino-and-mpu6050-accelerometer-and-gyroscope-tutorial/
+     */
     // join I2C bus (I2Cdev library doesn't do this automatically)
     #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
         Wire.begin();
@@ -217,11 +240,24 @@ void setup() {
     #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
         Fastwire::setup(400, true);
     #endif
+
+    //Set up midi channel
     MIDI.begin(MIDI_CHANNEL_OMNI);
+
+    //Begin Serial
     Serial.begin(115200);
+
+    //Something from https://howtomechatronics.com/tutorials/arduino/arduino-and-mpu6050-accelerometer-and-gyroscope-tutorial/
+    //Not sure what it does, but looks like it might break something if removed
     while (!Serial); // wait for Leonardo enumeration, others continue immediately
+
+    //Set up LEDS
     FastLED.addLeds<WS2812, DATA_PIN, RGB>(leds, NUM_LEDS);
 
+
+    /*
+     * MPU set up code from https://howtomechatronics.com/tutorials/arduino/arduino-and-mpu6050-accelerometer-and-gyroscope-tutorial/
+     */
     // initialize device
     mpu.initialize();
 
@@ -253,8 +289,7 @@ void setup() {
     } else {
     }
 
-    // configure LED for output
-    pinMode(LED_PIN, OUTPUT);
+    // configure Buttons for input
     pinMode(button1, INPUT_PULLUP);
     pinMode(button2, INPUT_PULLUP);
 
@@ -274,12 +309,17 @@ void setup() {
 void loop() {
     
     // if programming failed, don't try to do anything
+    //from https://howtomechatronics.com/tutorials/arduino/arduino-and-mpu6050-accelerometer-and-gyroscope-tutorial/
     if (!dmpReady) return;
+
+    //Check if there is a message on the radio
     if (radio.available()) {
       radio.read(&message, sizeof(message));
-  //    Serial.print(message.stateOne); Serial.print(" ");
-  //    Serial.println(message.stateTwo);
     }
+
+    /*
+     * More MPU set up code from https://howtomechatronics.com/tutorials/arduino/arduino-and-mpu6050-accelerometer-and-gyroscope-tutorial/
+     */
     // wait for MPU interrupt or extra packet(s) available
     while (!mpuInterrupt && fifoCount < packetSize) {    }
 
@@ -312,22 +352,17 @@ void loop() {
             stable = checkstable(quat.x);
             count = 0;
           }
+
+
+
+          //If the accelerometer valueshas stabilized
           if(stable){
+
+            //Check which gesture the ball is in
             gesture = checkgesture(quat.x, quat.y);
             
-//            bool statecheck = state[0] != message.stateOne or state[1] != message.stateTwo or state[2] != b1Engaged or state[3] != b2Engaged  or state[4] != gesture;
-//            if(statecheck){
-//              for(int i = 48; i<72; i++){
-//                MIDImessage(noteON, i, 0);
-//              }
-//              state[0] = message.stateOne;
-//              state[1] = message.stateTwo;
-//              state[2] = b1Engaged;
-//              state[3] = b2Engaged;
-//              state[4] = gesture;
-//            }
             
-            
+            //Set colors accord to the ball gesture
             if(gesture == 1){
               setcolors(CRGB::Blue);
             }
@@ -344,65 +379,115 @@ void loop() {
               setcolors(CRGB::White);
             }
 
+            //Set up chord array
             int notes[4];
-              
+
+            //For the first three notes in the chord
             for(int i=0; i<3; i++){
+
+              //If the Wand has a pitch of upright
               if(message.stateOne == 0){
+
+                //And the ball is in gesture 3
                 if(gesture == 3){
+
+                  //Write major reflected right to the chord array
                   notes[i] = majorright[i];
                 }
                 else{
+
+                  //Else if ball in gesture 4
                   if(gesture == 4){
+
+                    //Write major reflected left to the chord array
                     notes[i] = majorleft[i];
                   }
+
+                  //Otherwise right the major 
                   else{
                     notes[i] = major[i];
                   }
                 }           
               }
+
+              //If the Wand is at 45 degree angle
               else{
                 if(message.stateOne == 1){
+
+                  //And the ball is in gesture 3
                   if(gesture == 3){
+                    
+                    //Write minor reflected right to the chord array
                     notes[i] = minorright[i];
                   }
                   else{
+
+                    //Else if ball in gesture 4
                     if(gesture == 4){
+
+                      //Write minor reflected left to the chord array
                       notes[i] = minorleft[i];
                     }
                     else{
+
+                      //Otherwise right the minor 
                       notes[i] = minor[i];
                     }
                   } 
                 }
+
+                //If the Wand is at horizontal angle
                 else{
+
+                  //If there is a left or right gesture on the ball
                   if(gesture == 3 or gesture == 4){
+
+                    //Write the augmented chord flipped to the chord array
                     notes[i] = augflipped[i];
                   }
                   else{
+
+                    //Otherwise write the augmented chord to the chord array
                     notes[i] = aug[i];
                   }
                 }
               }
             }
+
+            //If the ball is in gesture 2
             if(gesture == 2){
+
+              //Add the major 7th to the chord array
               notes[3] = major7;
             }
+
+            //if the ball is in gesture 1
             else{
               if(gesture == 1){
+
+                //Add the minor 7th to the chord array
                 notes[3] = minor7;
               }
               else{
+
+                //Otherwise add the first note again (effectively null note)
                 notes[3] = 0;
               }
             }
 
-    
+          //if the first button is pressed
           if(readbutton(button1)){
+
+            //If it isn't held
             if(b1Engaged == 0){
+
+              //Play the store array 
+              //If the roll is to the left on the wand, shift to f chords
               if(message.stateTwo == 1){
                 playchord(notes, f, 60);
               }
               else{
+                //If the roll is to the right on the wand, shift to g chords
                 if(message.stateTwo == 2){
                   playchord(notes, g, 60);
                 }
@@ -420,20 +505,26 @@ void loop() {
             b1Engaged = 0;
           }
 
-            
+          //Same as for button one, just transposed to the bass clef
           if(readbutton(button2)){
+
+            //If it isn't held
             if(b2Engaged == 0){
-               if(message.stateTwo == 1){
-              playchord(notes, f, 48);
-            }
-            else{
-              if(message.stateTwo == 2){
-                playchord(notes, g, 48);
+
+              //Play the store array 
+              //If the roll is to the left on the wand, shift to f chords
+              if(message.stateTwo == 1){
+                playchord(notes, f, 48);
               }
               else{
-                playchord(notes, 0, 48);
+                //If the roll is to the right on the wand, shift to g chords
+                if(message.stateTwo == 2){
+                  playchord(notes, g, 48);
+                }
+                else{
+                  playchord(notes, 0, 48);
+                }
               }
-            }
             }
             b2Engaged = 1;
             setcolor1(CRGB::Red);
@@ -443,9 +534,10 @@ void loop() {
             b2Engaged = 0;
           }
 
-        // blink LED to indicate activity
         
       }
+
+      //Show that the accelerometer is not stable
       if(not stable){
         setcolor1(CRGB::Green);
       }
@@ -460,6 +552,10 @@ void MIDImessage(int command, int MIDInote, int MIDIvelocity) {
   Serial.write(MIDIvelocity);//send velocity data
 }
 
+//Play a chord
+//Chord a 4 note array to be played
+//Offset depends on if you want to shift the from C to exmaple F
+//base is the base offset to get you to your base note (for example C4)
 void playchord(int chord[], int offset, int base){
   for(int i = 0; i<4; i++){
     MIDI.sendNoteOff(prevNote[i], velocity, 1);
