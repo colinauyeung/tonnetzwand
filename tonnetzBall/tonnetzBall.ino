@@ -194,7 +194,7 @@ void setcolor1(CRGB color){
 }
 
 bool readbutton(int button){
-  int buttonValue = digitalRead(button1);
+  int buttonValue = digitalRead(button);
   if (buttonValue == LOW){
     return true;
   }
