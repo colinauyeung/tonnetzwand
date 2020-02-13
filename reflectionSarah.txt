@@ -1,0 +1,13 @@
+Quick Reflection. Write a quick note that addresses the following three questions:
+How much time did you spend on the assignment outside of class?
+	Approximately 20 hours were spent on the tonnetzWand.
+What did you learn during this project?
+	I learned that mapping gestures to musical notes is actually quite difficult. I was lost when it
+	came to figuring out what sound I wanted after adjusting the wand. I think that having a better understanding
+	of music would have helped.
+
+	On the hardware side, I learned a little bit about how to work with accelerometers and MIDI as I had
+	never worked with them before.
+
+What advice would you give to a future student working on this assignment?
+	Play around with sensors before you decide exactly what you want to do. Also, start as early as possible! 
