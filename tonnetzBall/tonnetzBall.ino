@@ -270,6 +270,7 @@ void setup() {
 
 
     // load and configure the DMP
+    
     devStatus = mpu.dmpInitialize();
 
     // supply your own gyro offsets here, scaled for min sensitivity
@@ -384,9 +385,13 @@ void loop() {
             if(gesture == 0){
               setcolors(CRGB::White);
             }
+            Serial.print(readbutton(button1));
+            Serial.print(", ");
+            Serial.println(readbutton(button2));
             if(readbutton(button1)){
+              Serial.print(readbutton(button1));
               b1Engaged = true;
-              setcolor1(CRGB::Purple);
+              setcolor1(CRGB::Green);
             }
             else
             {
@@ -394,7 +399,7 @@ void loop() {
             }
             if(readbutton(button2)){
               b2Engaged = true;
-              setcolor1(CRGB::Black);
+              setcolor1(CRGB::Red);
             }
             else
             {
