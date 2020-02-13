@@ -10,6 +10,8 @@
  */
 
 
+
+// Requirements for reading nunchuk
 #include <SoftwareSerial.h>
 #include <Nunchuk.h>
 #include <Wire.h>

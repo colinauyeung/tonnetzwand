@@ -4,9 +4,21 @@
  * 
  * tonnetz wand
  * 
- * This unit is used to control musical extension beyond a basic chord
+ * This device sends a message over radio to indicate whether it is
+ * in an upward, mid, or downward position, and whether it has been twisted
  * 
- * See README.txt for states and mapping with tonnetz
+ * LEDs are used to indicate the position states:
+ * Pitch:
+ *  Upwards: Green
+ *  Mid: blue
+ *  Down: pink
+ *  
+ * Roll: 
+ *  Red if twisted to either left or right side
+ *  
+ *  
+ * Radio reciever (external device) is called tonnetzBall and maps
+ * this devices pitch and roll states to a musical chord
  */
 
 // Radio
@@ -55,6 +67,19 @@ int action = 0;
 
 CRGB leds[NUM_LEDS];
 
+
+
+/*
+ * Sets the leds to show pitch and roll action
+ * 
+ * Pitch:
+ *  Upwards: Green
+ *  Mid: blue
+ *  Down: pink
+ *  
+ * Roll: 
+ *  Red if twisted to either left or right side
+ */
 void setcolors(int pitch, int roll){
   if(roll == 0){
     leds[3] = CRGB::White; 
@@ -122,6 +147,14 @@ void setAction()
   determineRollAction();  
 }
 
+/*
+ * Determines the pitch of the wand and assigns relative action
+ * 
+ * Upwards position = 0
+ * Mid position (wand ~45 degress) = 1
+ * Low position (wand ~0 degrees) = 2
+ */
+
 void determinePitchAction()
 {
   double upDivider = -0.65;
@@ -156,6 +189,15 @@ void determinePitchAction()
   }
 }
 
+
+/*
+ * Determines if wand has being rolled left or right
+ * and assigns an action accordingly
+ * 
+ * Left roll = 1
+ * Right roll = 2
+ * No roll = 0
+ */
 void determineRollAction()
 {
   if(pitchAction == 0)
