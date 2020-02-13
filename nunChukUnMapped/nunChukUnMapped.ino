@@ -135,6 +135,8 @@ void loop() {
       Serial.println(message.stateOne);
       Serial.println(message.stateTwo);
       Serial.println("Writing");
+
+      //Send data over radio
       radio.write(&message,sizeof(message));
       setcolors(pitchAction, rollAction);
   }
