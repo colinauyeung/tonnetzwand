@@ -207,16 +207,16 @@ bool checkstable(float quatw){
 int checkgesture(float quatx, float quaty){
 
   //tilt down
-  if(quatx > 0.20 & quaty > 0.20) return 1;
+  if(quatx > 0.40) return 3;
 
   //tilt up
-  if(quatx < -0.20 & quaty < -0.20) return 2;
+  if(quatx < -0.40) return 4;
 
   //tilt right
-  if(quatx > 0.20 & quaty < -0.20) return 3;
+  if(quaty < -0.40) return 2;
 
   //tilt left
-  if(quatx < -0.20 & quaty > 0.20) return 4;
+  if(quaty > 0.40) return 1;
 
   //Neutral position
   return 0;
