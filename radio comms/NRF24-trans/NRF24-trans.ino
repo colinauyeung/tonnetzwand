@@ -97,6 +97,7 @@
   strcat(message,idstr);
   //action, id
   Serial.println(message);
+  radio.write(&message, sizeof(message)); 
 
   //Serial.println(action);
   //radio.write(&cstr, sizeof(cstr));
@@ -133,7 +134,7 @@ void triggerAction(double one, double two, double three, double current)
       }
     }
 
-    if(!changeAction && (millis() - timerStart >= timerPeriod))
+    if(!changedAction && (millis() - timerStart >= timerPeriod))
     {
       id++;
     }

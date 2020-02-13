@@ -20,6 +20,10 @@ RF24 radio(7,8);  // CE,CSN
 #include <Wire.h>
 #include "nunchuk.h"
 
+#include <FastLED.h>
+#define NUM_LEDS 4
+#define DATA_PIN 3
+
 // Radio message components
 const byte address[6] = "00001";
 
@@ -49,13 +53,41 @@ int rollAction = 0;
 
 int action = 0;
 
+CRGB leds[NUM_LEDS];
+
+void setcolors(int pitch, int roll){
+  if(roll == 0){
+    leds[3] = CRGB::White; 
+  }
+  else{
+    leds[3] = CRGB::Green; 
+  }
+  if(pitch == 0){
+    for(int i = 0; i<NUM_LEDS-1; i++){
+      leds[i] = CRGB::Red;
+    }
+  }
+  else{
+   if(pitch == 1){
+      for(int i = 0; i<NUM_LEDS-1; i++){
+        leds[i] = CRGB::Blue;
+      }
+    }
+    else{
+      for(int i = 0; i<NUM_LEDS-1; i++){
+        leds[i] = CRGB::Cyan;
+      }
+    }
+  }
+  FastLED.show();
+}
 
 void setup() {
     Serial.begin(9600);
     Wire.begin();
     nunchuk_init();
 
-      
+    FastLED.addLeds<WS2812, DATA_PIN, RGB>(leds, NUM_LEDS);    
     radio.begin();
     radio.openWritingPipe(address);
     radio.setPALevel(RF24_PA_MIN);
@@ -79,6 +111,7 @@ void loop() {
       Serial.println(message.stateTwo);
       Serial.println("Writing");
       radio.write(&message,sizeof(message));
+      setcolors(pitchAction, rollAction);
   }
 }
 

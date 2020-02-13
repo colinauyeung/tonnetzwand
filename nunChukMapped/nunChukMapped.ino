@@ -14,6 +14,7 @@
 #include <Nunchuk.h>
 #include <Wire.h>
 #include "nunchuk.h"
+#include <MIDI.h>
 
 // Read values from sensor
 double pitchVal;
@@ -34,6 +35,10 @@ int velocity = 100;//velocity of MIDI notes, must be between 0 and 127
 int noteON = 144; //144 = 10010000 in binary, note on command
 
 int lastMainState = 8; // only states that are basic major/minor chords
+
+//MIDI Instance
+MIDI_CREATE_DEFAULT_INSTANCE();
+
 
 // Different chords
 
@@ -101,7 +106,8 @@ int PSIX_RR[3] = {0,7,10};  // id = 42
 
 
 void setup() {
-    Serial.begin(9600);
+    MIDI.begin(MIDI_CHANNEL_OMNI);
+    Serial.begin(115200);
     Wire.begin();
     nunchuk_init();
 }
@@ -112,11 +118,15 @@ void loop() {
         // Work with nunchuk_data
         pitchVal = nunchuk_pitch();
         rollVal = nunchuk_roll();
+//        Serial.print(pitchAction);
+//        Serial.print(", ");
+//        Serial.println(rollAction);
         
         triggerAction();
         //Serial.println(action);
         delay(500);
         playChord();
+        
     }
     
     else

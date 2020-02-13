@@ -18,7 +18,20 @@
  const byte address[6] = "00001";
 
 
+// Structure of message sent to reciever
+/*
+ * ID == 1 : Wand
+ *  stateOne is pitch action
+ *  stateTwo is roll action
+*/
+typedef struct{
+  int ID = 1;
+  int stateOne = 0;
+  int stateTwo = 0;
+ } actionMessage;
 
+// Message sent to reciever
+ actionMessage message;
 
 
 // receive data as double
@@ -113,9 +126,10 @@ int PSIX_RR[3] = {0,7,10};  // id = 42
 void loop() {
   if (radio.available()) {
     char text[32] = "";
-    radio.read(&text, sizeof(text));
-
-    val = atof(text);
+    radio.read(&message, sizeof(message));
+    Serial.print(message.stateOne); Serial.print(" ");
+    Serial.println(message.stateTwo);
+//    val = atof(text);
 
   }
 }

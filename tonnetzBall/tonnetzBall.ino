@@ -28,6 +28,8 @@ THE SOFTWARE.
 ===============================================
 */
 
+#include <MIDI.h>
+
 #include "I2Cdev.h"
 
 #include "MPU6050_6Axis_MotionApps20.h"
@@ -93,23 +95,21 @@ bool stable = false;
 float lastw = 0;
 
 
-// Radio
+// Radio stuff
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
 RF24 radio(7,8);  // CE,CSN
-
-// Radio message components
-const byte address[6] = "00010";
+const byte address[6] = "00001";
 
 // Structure of message sent to reciever
 /*
- * ID == 2 : Ball
- *  stateOne is gesture 0-4, NOTE - 5 is unstable
- *  stateTwo is button(s) pressed (1:b1, 2:b2, 3:b1&b2)
+ * ID == 1 : Wand
+ *  stateOne is pitch action
+ *  stateTwo is roll action
 */
 typedef struct{
-  int ID = 2;
+  int ID = 1;
   int stateOne = 0;
   int stateTwo = 0;
  } actionMessage;
@@ -121,10 +121,36 @@ int button1 = 4;
 int button2 = 5;
 
 int gesture = 0;
-bool b1Engaged = false;
-bool b2Engaged = false;
+bool b1Engaged = 0;
+bool b2Engaged = 0;
 
 CRGB leds[NUM_LEDS];
+
+int major[3] = {0, 4, 7};
+int minor[3] = {0, 3, 7};
+int aug[3] = {0, 4, 8};
+int major7 = 11;
+int minor7 = 10;
+
+int majorleft[3] = {0, 4, 9};
+int majorright[3] = {4, 7, 11};
+
+int minorleft[3] = {0, 3, 8}; 
+int minorright[3] = {3, 7, 10};
+
+int augflipped[3] = {0, 3, 9};
+
+int f = 5;
+int g = 7;
+
+
+int state[5] = {0, 0, 0, 0, 0};
+
+// MIDI message requirements
+int velocity = 100;//velocity of MIDI notes, must be between 0 and 127
+int noteON = 144; //144 = 10010000 in binary, note on command
+
+MIDI_CREATE_DEFAULT_INSTANCE();
 
 // ================================================================
 // ===               INTERRUPT DETECTION ROUTINE                ===
@@ -140,45 +166,6 @@ void dmpDataReady() {
 // ================================================================
 
 
-/*
- * Sets the messages structures values to indicate
- * gesture and button press
- */
-void setRadioMessage()
-{
-  if(!stable)
-  {
-    message.stateOne = 5;
-  }
-  else
-  {
-    message.stateOne = gesture;
-    //if(b1Engaged && b2Engaged)
-    //{
-      //message.stateTwo = 3;
-    //}
-    if(b1Engaged)
-    {
-      message.stateTwo = 1;
-    }
-    //else if(b2Engaged)
-    //{
-      //message.stateTwo = 2;
-    //}
-    else
-    {
-      message.stateTwo = 0;
-    }
-  }
-}
-
-void sendRadioMessage()
-{
-  if(radio.available())
-  {
-    radio.write(&message,sizeof(message));
-  }
-}
 
 
 void setcolors(CRGB color){
@@ -249,6 +236,7 @@ void setup() {
     #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
         Fastwire::setup(400, true);
     #endif
+    MIDI.begin(MIDI_CHANNEL_OMNI);
     Serial.begin(115200);
     while (!Serial); // wait for Leonardo enumeration, others continue immediately
     FastLED.addLeds<WS2812, DATA_PIN, RGB>(leds, NUM_LEDS);
@@ -310,9 +298,9 @@ void setup() {
 
     // radio configuration
     radio.begin();
-    radio.openWritingPipe(address);
+    radio.openReadingPipe(0, address);
     radio.setPALevel(RF24_PA_MIN);
-    radio.stopListening();
+    radio.startListening();
 }
 
 
@@ -325,7 +313,11 @@ void loop() {
     
     // if programming failed, don't try to do anything
     if (!dmpReady) return;
-
+    if (radio.available()) {
+      radio.read(&message, sizeof(message));
+  //    Serial.print(message.stateOne); Serial.print(" ");
+  //    Serial.println(message.stateTwo);
+    }
     // wait for MPU interrupt or extra packet(s) available
     while (!mpuInterrupt && fifoCount < packetSize) {    }
 
@@ -356,25 +348,39 @@ void loop() {
 
           // display quaternion values in easy matrix form: w x y z
           mpu.dmpGetQuaternion(&quat, fifoBuffer);
-          //Serial.print("quat\t");
-         // Serial.print(quat.w);
-          //Serial.print("\t");
-          //Serial.print(quat.x);
-          //Serial.print("\t");
-          //Serial.print(quat.y);
-          //Serial.print("\t");
-          //Serial.println(quat.z);
+//          Serial.print("quat\t");
+//          Serial.print(quat.w);
+//          Serial.print("\t");
+//          Serial.print(quat.x);
+//          Serial.print("\t");
+//          Serial.print(quat.y);
+//          Serial.print("\t");
+//          Serial.println(quat.z);
           if(count > 500 & not stable){
             stable = checkstable(quat.x);
             count = 0;
           }
-          if(stable and count > 100 ){
+          if(stable){
             gesture = checkgesture(quat.x, quat.y);
+            
+//            bool statecheck = state[0] != message.stateOne or state[1] != message.stateTwo or state[2] != b1Engaged or state[3] != b2Engaged  or state[4] != gesture;
+//            if(statecheck){
+//              for(int i = 48; i<72; i++){
+//                MIDImessage(noteON, i, 0);
+//              }
+//              state[0] = message.stateOne;
+//              state[1] = message.stateTwo;
+//              state[2] = b1Engaged;
+//              state[3] = b2Engaged;
+//              state[4] = gesture;
+//            }
+            
+            
             if(gesture == 1){
-              setcolors(CRGB::Red);
+              setcolors(CRGB::Blue);
             }
             if(gesture == 2){
-              setcolors(CRGB::Blue);
+              setcolors(CRGB::Red);
             }
             if(gesture == 3){
               setcolors(CRGB::Cyan);
@@ -385,34 +391,125 @@ void loop() {
             if(gesture == 0){
               setcolors(CRGB::White);
             }
-            Serial.print(readbutton(button1));
-            Serial.print(", ");
-            Serial.println(readbutton(button2));
-            if(readbutton(button1)){
-              Serial.print(readbutton(button1));
-              b1Engaged = true;
-              setcolor1(CRGB::Green);
-            }
-            else
-            {
-              b1Engaged = false;
-            }
-            if(readbutton(button2)){
-              b2Engaged = true;
-              setcolor1(CRGB::Red);
-            }
-            else
-            {
-              b2Engaged = false;
-            }
-          }
-        // blink LED to indicate activity
-        if(not stable){
-          setcolor1(CRGB::Green);
-        }
-        count = count + 1;
-    }
 
-    setRadioMessage();
-    sendRadioMessage();
+            int notes[4];
+              
+            for(int i=0; i<3; i++){
+              if(message.stateOne == 0){
+                if(gesture == 3){
+                  notes[i] = majorright[i];
+                }
+                else{
+                  if(gesture == 4){
+                    notes[i] = majorleft[i];
+                  }
+                  else{
+                    notes[i] = major[i];
+                  }
+                }           
+              }
+              else{
+                if(message.stateOne == 1){
+                  if(gesture == 3){
+                    notes[i] = minorright[i];
+                  }
+                  else{
+                    if(gesture == 4){
+                      notes[i] = minorleft[i];
+                    }
+                    else{
+                      notes[i] = minor[i];
+                    }
+                  } 
+                }
+                else{
+                  if(gesture == 3 or gesture == 4){
+                    notes[i] = augflipped[i];
+                  }
+                  else{
+                    notes[i] = aug[i];
+                  }
+                }
+              }
+            }
+            if(gesture == 2){
+              notes[3] = major7;
+            }
+            else{
+              if(gesture == 1){
+                notes[3] = minor7;
+              }
+              else{
+                notes[3] = 0;
+              }
+            }
+
+    
+          if(readbutton(button1)){
+            if(b1Engaged == 0){
+              if(message.stateTwo == 1){
+                playchord(notes, f, 60);
+              }
+              else{
+                if(message.stateTwo == 2){
+                  playchord(notes, g, 60);
+                }
+                else{
+                  playchord(notes, 0, 60);
+                }
+              }
+            }
+            b1Engaged = 1;
+            setcolor1(CRGB::Green);
+            
+          }
+          else
+          {
+            b1Engaged = 0;
+          }
+
+            
+          if(readbutton(button2)){
+            if(b2Engaged == 0){
+               if(message.stateTwo == 1){
+              playchord(notes, f, 48);
+            }
+            else{
+              if(message.stateTwo == 2){
+                playchord(notes, g, 48);
+              }
+              else{
+                playchord(notes, 0, 48);
+              }
+            }
+            }
+            b2Engaged = 1;
+            setcolor1(CRGB::Red);
+          }
+          else
+          {
+            b2Engaged = 0;
+          }
+
+        // blink LED to indicate activity
+        
+      }
+      if(not stable){
+        setcolor1(CRGB::Green);
+      }
+      count = count + 1;
+  }
+}
+
+//send MIDI message
+void MIDImessage(int command, int MIDInote, int MIDIvelocity) {
+  Serial.write(command);//send note on or note off command 
+  Serial.write(MIDInote);//send pitch data
+  Serial.write(MIDIvelocity);//send velocity data
+}
+
+void playchord(int chord[], int offset, int base){
+  for(int i = 0; i<4; i++){
+    MIDI.sendNoteOn(base+offset+chord[i], velocity, 1);
+  }
 }
